@@ -61,6 +61,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isWithinPolygon = false;
   Polygon polygon = Polygon(points);
   List<String> attendence = [];
+  bool present = false;
+  bool absent = false;
   String _locationMessage = "Loading location...";
   double latitude = 0;
   double longitude = 0;
@@ -98,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _locationMessage = "Latitude: ${position.latitude} \nLongitude: ${position.longitude}";
       _userCoordinate = Point(position.latitude, position.longitude);
       //Only for testing
-      //_userCoordinate = Point(24.886, -70.268);
+      //_userCoordinate = Point(33.657639, 73.157733);
       //_userCoordinate = Point(73.157779, 33.657624); //in location
       //_userCoordinate = Point(73.157698, 33.657656); //out of location
       //should be inside coordinate and attendence should be added
@@ -111,93 +113,172 @@ class _HomeScreenState extends State<HomeScreen> {
     print("Build");
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Location Checker'),
+        title: const Text('GPS Based Attendence System',
+          style: TextStyle(fontWeight: FontWeight.w800,
+              fontSize: 20,
+              color: Colors.black,
+          ),)
       ),
-      body: Column(
-        children: <Widget>[
-          // Input field for polygon coordinates
-          TextField(
-      decoration: const InputDecoration(
-          hintText: 'Enter GEO Location coordinates (Late Long,Lat Long, ...)',
-      ),
-      onChanged: (value) {
-        // Parse the input string and add the coordinates to the polygon points list
-        points = value.split(',').map((coordinate) {
-          List<double> coords = coordinate.split(' ').map(double.parse).toList();
-          return Point(coords[0], coords[1]);
-        }).toList();
-        setState(() {
-          print(points[1].y);
-          points = points;
-        });
-      },
-    ),
-          // Input field for user's coordinate
-          /*TextField(
-            decoration: const InputDecoration(
-                hintText: 'Enter your custom coordinate (Late Long)'),
-            onChanged: (value) {
-              List<double> coords = value.split(' ').map(double.parse).toList();
-              setState(() {
-                //print("in set state ${coords[0]} ,${coords[1]}");
-               //_userCoordinate = Point(coords[0], coords[1]);
-              });
-            },
-          ),*/
-          // Check if user's coordinate is within the polygon
-          Padding(
-            padding: const EdgeInsets.only(left: 65.0),
-            child: Row(
-              children: [
-                ElevatedButton(
-                  child: const Text('Set Location'),
-                  onPressed: () {
-                    /*_getCurrentLocation();
-                    _userCoordinate = Point(33.657639, 73.157743); //in location
-                    setState(() {});*/
-                    print("in button${_userCoordinate.x} ${_userCoordinate.y}");
-                    _isWithinPolygon = polygon.isPointInside(_userCoordinate,points);
-                    if (_isWithinPolygon) {
-                      attendence.add("present ${TimeOfDay.now()}(${_userCoordinate.x}, ${_userCoordinate.y})");
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text(
-                              'Attendance is Marked as You are within the Location!')));
-                    } else {
-                      attendence.add("OutOfLocation ${TimeOfDay.now()}(${_userCoordinate.x}, ${_userCoordinate.y})");
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('You are not within the location!')));
-                    }
-                    setState(() {});
-                  },
+      body: SingleChildScrollView(
+        child: Column(
+          children: <Widget>[
+            const Text("Coordinates of the Premises",
+              style: TextStyle(decoration: TextDecoration.underline,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 20),),
+            // Input field for polygon coordinates
+            Center(
+              child: TextField(
+                maxLines: 4,
+                textAlign: TextAlign.center,
+                keyboardType: TextInputType.multiline,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: 'Enter GEO Location coordinates (Lat Long,Lat Long, ...)',
                 ),
-                const SizedBox(width: 20),
-                ElevatedButton(
-                  child: const Text('Refresh Location'),
-                  onPressed: () {
-                    _getCurrentLocation();
-                    /*latitude= 33.657639;
-                    longitude= 73.157743; *///in location
-                    setState(() {});
-                  }
+        onChanged: (value) {
+          // Parse the input string and add the coordinates to the polygon points list
+          points = value.split(',').map((coordinate) {
+              List<double> coords = coordinate.split(' ').map(double.parse).toList();
+              return Point(coords[0], coords[1]);
+          }).toList();
+          setState(() {
+              print(points[1].y);
+              points = points;
+          });
+        },
+    ),
+            ),
+            // Input field for user's coordinate
+            /*TextField(
+              decoration: const InputDecoration(
+                  hintText: 'Enter your custom coordinate (Late Long)'),
+              onChanged: (value) {
+                List<double> coords = value.split(' ').map(double.parse).toList();
+                setState(() {
+                  //print("in set state ${coords[0]} ,${coords[1]}");
+                 //_userCoordinate = Point(coords[0], coords[1]);
+                });
+              },
+            ),*/
+            // Check if user's coordinate is within the polygon
+            Padding(
+              padding: const EdgeInsets.only(left: 55.0),
+              child: Row(
+                children: [
+                  ElevatedButton(
+                    child: const Text('Mark Attendance', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),),
+                    onPressed: () {
+                      /*_getCurrentLocation();
+                      _userCoordinate = Point(33.657639, 73.157743); //in location
+                      setState(() {});*/
+                      print("in button${_userCoordinate.x} ${_userCoordinate.y}");
+
+                      _isWithinPolygon = polygon.isPointInside(_userCoordinate,points);
+                      if (_isWithinPolygon) {
+                        present = true;
+                        absent = false;
+                        //attendence.add("InsideLocation ${TimeOfDay.now()}(${_userCoordinate.x}, ${_userCoordinate.y})");
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text(
+                                'Attendance is Marked as You are within the Location!')));
+                      } else {
+                        present = false;
+                        absent = true;
+                        //attendence.add("OutOfLocation ${TimeOfDay.now()}(${_userCoordinate.x}, ${_userCoordinate.y})");
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text('You are not within the location!')));
+                      }
+                      setState(() {});
+                    },
+                  ),
+                  const SizedBox(width: 20),
+                  ElevatedButton(
+                    child: const Text('Apply Coordinates', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),),
+                    onPressed: () {
+                      FocusScope.of(context).unfocus();
+                      _getCurrentLocation();
+                      /*latitude= 33.657639;
+                      longitude= 73.157743; *///in location
+                      setState(() {});
+                    }
+                  ),
+                ],
+              ),
+            ),
+
+            // Display result
+            //Text("Office Location is ${points[0].x} ${points[0].y} ${points[1].x} ${points[1].y} ${points[2].x} ${points[2].y} ${points[3].x} ${points[3].y}"),
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(_isWithinPolygon ? 'Within Location' : 'Not within Location'),
+            ),
+
+            //Text(_locationMessage),
+            Padding(
+              padding: const EdgeInsets.only(top: 15.0),
+              child: Text("Latitude: $latitude \nLongitude: $longitude"),
+            ),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Padding(padding:  EdgeInsets.only(top: 65.0, left: 15.0),
+                  child: present ? RichText(
+                    text: TextSpan(
+                      text: 'Inside Location ',
+                      style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900 ,fontSize: 20),
+                      children: <TextSpan>[
+                        TextSpan(text: '(${_userCoordinate.x}, ${_userCoordinate.y})', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w400 ,fontSize: 17)),
+                      ],
+                    ),
+                  )//,Text("Inside Location (${_userCoordinate.x}, ${_userCoordinate.y})", style: const TextStyle(fontWeight: FontWeight.w900 ,fontSize: 15),)
+                      : RichText(
+                    text: TextSpan(
+                      text: 'Out of Location ',
+                      style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900 ,fontSize: 20),
+                      children: <TextSpan>[
+                        TextSpan(text: ' (${_userCoordinate.x}, ${_userCoordinate.y})', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w400 ,fontSize: 17)),
+                      ],
+                    ),
+                  ) //Text("Out of Location (${_userCoordinate.x}, ${_userCoordinate.y})", style: const TextStyle(fontWeight: FontWeight.w900 ,fontSize: 15),),
                 ),
               ],
             ),
-          ),
-          // Display result
-          //Text("Office Location is ${points[0].x} ${points[0].y} ${points[1].x} ${points[1].y} ${points[2].x} ${points[2].y} ${points[3].x} ${points[3].y}"),
-          Text(_isWithinPolygon ? 'Within Location' : 'Not within Location'),
-          //Text(_locationMessage),
-          Text("Latitude: $latitude \nLongitude: $longitude"),
-          SizedBox(
-            height: 100,
-            child: ListView.builder(
-                //padding: const EdgeInsets.all(8),
-                itemCount: attendence.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return Text(attendence[index]);
-                }),
-          )
-        ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 15.0 , horizontal: 15.0),
+                  child: SizedBox(
+                    height: 25,
+                    child: present ? const Text("Employee Attendance Time stamp", style: TextStyle(fontWeight: FontWeight.w900 ,fontSize: 20),)
+                        : const Text("Attendance Failed", style: TextStyle(fontWeight: FontWeight.w900 ,fontSize: 20 ),),
+                  ),
+                ),
+              ],
+            ),
+            
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 15.0),
+                  child: Text("Date:    ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} ", style: const TextStyle(fontWeight: FontWeight.w900 ,fontSize: 18 ),),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 15.0),
+                  child: Text("Time:    ${TimeOfDay.now().hour}:${DateTime.now().minute} ${DateTime.now().timeZoneName}", style: const TextStyle(fontWeight: FontWeight.w900 ,fontSize: 18 ),),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
